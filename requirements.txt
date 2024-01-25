@@ -1,3 +1,9 @@
-pandas>=2.1.4
-gspread>=5.12.4
+#MySQL libraries
 mysql-connector-python>=8.2.0
+mysql~=0.0.3
+#Google auth libraries
+google-api-python-client>=2.115.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib>=1.2.0
+#Google spreadsheets libraries
+gspread>=5.12.4

@@ -137,14 +137,6 @@ class MySQLDataFetcher:
 
     def get_order_attributes(self, order_id):
         pass
-    # def fetch_data(self):
-    #     order_id = self.get_latest_order_id()
-    #     if order_id is not None:
-    #         product_name_result = self.get_product_names_and_quantities(order_id)
-    #         delivery_date_result = self.get_delivery_date(order_id)
-    #         return order_id, product_name_result, delivery_date_result
-    #     else:
-    #         return None
 
     def close_connection(self):
         self.cur.close()
@@ -158,26 +150,3 @@ data_fetcher = MySQLDataFetcher(
     host='mn09.webd.pl',
     database='blueluna_polishlody_test'
 )
-
-
-order_id = data_fetcher.get_latest_order_id()
-product_name_and_quantities = data_fetcher.get_product_names_and_quantities(order_id)
-delivery_date = data_fetcher.get_delivery_date(order_id)
-shipping_address = data_fetcher.get_shipping_address(order_id)
-comments_to_order = data_fetcher.get_comments_to_order(order_id)
-first_and_last_name = data_fetcher.get_first_and_last_name(order_id)
-product_price = data_fetcher.get_product_price(order_id)
-shipping_price = data_fetcher.get_shipping_price(order_id)
-payment_method = data_fetcher.get_payment_method(order_id)
-
-
-print(order_id)
-print(product_name_and_quantities)
-print(delivery_date)
-print(shipping_address)
-print(comments_to_order)
-print(first_and_last_name)
-print(product_price)
-print(shipping_price)
-print(payment_method)
-data_fetcher.close_connection()

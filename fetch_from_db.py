@@ -41,8 +41,11 @@ class MySQLDataFetcher:
                               "AND wim_delivery_date.meta_key = '_delivery_date'"
         self.cur.execute(delivery_date_query, (order_id,))
         result = self.cur.fetchall()
-        date = result[0][0]
-        return date
+        if result:
+            date = result[0][0]
+            return date
+        else:
+            return None
 
     def get_shipping_address(self, order_id):
         shipping_address_query = "SELECT woi.order_item_id, " \
@@ -85,17 +88,22 @@ class MySQLDataFetcher:
                                       order_id, shipping_method, street_name, city_name, postal_code, phone_number in
                                       result)
             return shipping_data
-        else:
+        elif result:
             shipping_data = result[0][2]
             return shipping_data
+        else:
+            return None
 
     def get_comments_to_order(self, order_id):
         comments_to_order_query = "SELECT post_excerpt " \
                                   "FROM blueluna_polishlody_test.wp_posts " \
                                   "WHERE ID = %s "
         self.cur.execute(comments_to_order_query, (order_id,))
-
-        return self.cur.fetchone()[0]
+        result = self.cur.fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
 
     def get_first_and_last_name(self, order_id):
         first_and_last_name_query = "SELECT " \
@@ -125,7 +133,11 @@ class MySQLDataFetcher:
                                "FROM blueluna_polishlody_test.wp_postmeta " \
                                "WHERE post_id = %s AND meta_key = '_order_shipping'"
         self.cur.execute(shipping_price_query, (order_id,))
-        return self.cur.fetchall()[0][1]
+        result = self.cur.fetchall()
+        if result:
+            return result[0][1]
+        else:
+            return None
 
     def get_payment_method(self, order_id):
         payment_method_query = "SELECT post_id AS order_id, " \
@@ -138,12 +150,34 @@ class MySQLDataFetcher:
     def get_order_attributes(self, order_id):
         pass
 
+    def get_missing_order_ids(self, existing_order_ids):
+        # Jeżeli nie ma żadnych zamówień w arkuszu, zwróć wszystkie zamówienia z bazy danych
+        if not existing_order_ids:
+            latest_order_id = self.get_latest_order_id()
+            if latest_order_id is not None:
+                all_order_ids = range(3335, latest_order_id + 1)  # Tutaj ustawiam zakres od którego order_id ma dodawać
+                return all_order_ids
+            else:
+                return []
+
+        # Znajdź największe order_id w arkuszu
+        max_existing_order_id = max(map(int, existing_order_ids), default=0)
+
+        # Znajdź order_id większe od największego w arkuszu
+        latest_order_id = self.get_latest_order_id()
+        if latest_order_id is not None:
+            missing_order_ids = [order_id for order_id in range(max_existing_order_id + 1, latest_order_id + 1)]
+            return missing_order_ids
+        else:
+            return []
+
     def close_connection(self):
         self.cur.close()
         self.conn.close()
 
+        ### Need to change it to os.path ###
 
-                                        ### Need to change it to os.path ###
+
 data_fetcher = MySQLDataFetcher(
     username='blueluna_polishlody_raport',
     password='+7ubV3m*cnW_',

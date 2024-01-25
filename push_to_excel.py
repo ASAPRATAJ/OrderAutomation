@@ -1,11 +1,13 @@
 """Script for updating data in google spreadsheets."""
 import os.path
-import fetch_from_db
+import gspread
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+
+spreadsheet_id = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
+range_name = "Arkusz1!A:J"
 
 
 class GoogleSheetsUpdater:
@@ -32,6 +34,17 @@ class GoogleSheetsUpdater:
                 token.write(creds.to_json())
 
         return creds
+
+    def get_existing_order_ids(self):
+        values_range = self.service.spreadsheets().values().get(
+            spreadsheetId=self.spreadsheet_id,
+            range=f"{self.range_name.split('!')[0]}!A5:A"
+        ).execute()
+
+        existing_orders = values_range.get('values') if 'values' in values_range else []
+
+        return [str(order[0]).strip() for order in existing_orders if
+                order]  # Zamień na str i usuń ewentualne białe znaki
 
     def update_data(self, new_data):
         # Pobierz aktualny zakres arkusza
@@ -80,8 +93,11 @@ class GoogleSheetsUpdater:
         else:
             print(f"Order with order_id {order_id} already exists in the spreadsheet. Skipped.")
 
+
 # Check if order with specified order_id had been already added to spreadsheet.                                    DONE
 # Check the latest order_id in spreadsheet and add every other which has not been added.                    IN PROGRESS
 # Add test cases for making script unreliable                                                               IN PROGRESS
 # Change the way of passing credentials to database in script (hash it, or make it found by os.path?)       IN PROGRESS
 
+
+updater = GoogleSheetsUpdater(spreadsheet_id, range_name)

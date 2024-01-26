@@ -148,14 +148,29 @@ class MySQLDataFetcher:
         return self.cur.fetchall()[0][1]
 
     def get_order_attributes(self, order_id):
-        pass
+        order_attributes_query = "SELECT " \
+                                 "woi.order_id, " \
+                                 "woi.order_item_id, " \
+                                 "MAX(CASE WHEN wim.meta_key = 'pa_topper' THEN wim.meta_value END) AS pa_topper, " \
+                                 "MAX(CASE WHEN wim.meta_key = 'pa_swieczka-nr-1' THEN wim.meta_value END) AS pa_swieczka_nr_1, " \
+                                 "MAX(CASE WHEN wim.meta_key = 'pa_swieczka-nr-2' THEN wim.meta_value END) AS pa_swieczka_nr_2 " \
+                                 "FROM blueluna_polishlody_test.wp_woocommerce_order_items woi " \
+                                 "JOIN blueluna_polishlody_test.wp_woocommerce_order_itemmeta wim ON woi.order_item_id = wim.order_item_id " \
+                                 "WHERE woi.order_id = %s " \
+                                 "AND wim.meta_key IN ('pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2')"
+        self.cur.execute(order_attributes_query, (order_id,))
+        result = self.cur.fetchall()
+        order_attributes = " ".join(
+            f'{topper}, \n{swieczka_nr_1}, \n{swieczka_nr_2}' for order_id, order_item_id, topper, swieczka_nr_1, swieczka_nr_2 in result)
+
+        return order_attributes
 
     def get_missing_order_ids(self, existing_order_ids):
         # Jeżeli nie ma żadnych zamówień w arkuszu, zwróć wszystkie zamówienia z bazy danych
         if not existing_order_ids:
             latest_order_id = self.get_latest_order_id()
             if latest_order_id is not None:
-                all_order_ids = range(3335, latest_order_id + 1)  # Tutaj ustawiam zakres od którego order_id ma dodawać
+                all_order_ids = range(3338, latest_order_id + 1)  # Tutaj ustawiam zakres od którego order_id ma dodawać
                 return all_order_ids
             else:
                 return []

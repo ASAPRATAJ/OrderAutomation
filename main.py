@@ -4,12 +4,11 @@ from push_to_excel import updater
 
 
 def main():
-    print("program startuje")
+    print("Start fetching orders from database...")
     existing_order_ids = updater.get_existing_order_ids()  # Metoda, która pobiera istniejące order_id z arkusza Google
-    print(existing_order_ids)
     missing_order_ids = data_fetcher.get_missing_order_ids(existing_order_ids)
-    print(missing_order_ids)
-    print('dziala1')
+    print(f'Missing orders in google spreadsheet: {len(missing_order_ids)}', missing_order_ids)
+
     for missing_order_id in missing_order_ids:
         product_names_and_quantities = data_fetcher.get_product_names_and_quantities(missing_order_id)
         delivery_date = data_fetcher.get_delivery_date(missing_order_id)

@@ -56,7 +56,7 @@ class GoogleSheetsUpdater:
         num_rows = len(values_range.get('values')) if 'values' in values_range else 0
 
         # Tworzy nowy zakres, zaczynając od następnego wiersza
-        new_range = f"{self.range_name.split('!')[0]}!A{num_rows + 2}:J{num_rows + 2 + len(new_data) - 1}"
+        new_range = f"{self.range_name.split('!')[0]}!A{num_rows + 2}:J{num_rows + 1 + len(new_data) - 1}"
         # Aktualizuj nowy zakres z nowymi danymi
         body = {"values": new_data}
         result = self.service.spreadsheets().values().update(
@@ -94,7 +94,10 @@ class GoogleSheetsUpdater:
 
 
 # Check if order with specified order_id had been already added to spreadsheet.                                    DONE
-# Check the latest order_id in spreadsheet and add every other which has not been added.                    IN PROGRESS
+# Check the latest order_id in spreadsheet and add every other which has not been added.                           DONE
+# Add fetching data from DB about _pa_topper, _pa_swieczka-nr-1 and _pa_swieczka-nr-2
+# and putting it into spreadsheet                                                                                  DONE
+# Add logic that position orders with chronological delivery_date                                           IN PROGRESS
 # Add test cases for making script unreliable                                                               IN PROGRESS
 # Change the way of passing credentials to database in script (hash it, or make it found by os.path?)       IN PROGRESS
 

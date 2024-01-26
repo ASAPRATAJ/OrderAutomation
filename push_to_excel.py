@@ -1,5 +1,6 @@
 """Script for updating data in google spreadsheets."""
 import os.path
+import gspread
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -45,6 +46,28 @@ class GoogleSheetsUpdater:
         return [str(order[0]).strip() for order in existing_orders if
                 order]  # Zamień na str i usuń ewentualne białe znaki
 
+    def sort_spreadsheet(self):
+        values_range = self.service.spreadsheets().values().get(
+            spreadsheetId=self.spreadsheet_id,
+            range=self.range_name
+        ).execute()
+
+        # Get the values
+        values = values_range.get('values') if 'values' in values_range else []
+
+        # Sort the values based on the delivery date (assuming it's in the second column)
+        sorted_values = sorted(values[4:], key=lambda x: x[1] if x and len(x) > 1 else '', reverse=False)
+
+        # Update the sorted values in the spreadsheet
+        new_range = f"{self.range_name.split('!')[0]}!A5:J{len(sorted_values) + 4}"
+        body = {"values": sorted_values}
+        self.service.spreadsheets().values().update(
+            spreadsheetId=self.spreadsheet_id,
+            range=new_range,
+            valueInputOption="RAW",
+            body=body,
+        ).execute()
+
     def update_data(self, new_data):
         # Pobierz aktualny zakres arkusza
         values_range = self.service.spreadsheets().values().get(
@@ -65,6 +88,9 @@ class GoogleSheetsUpdater:
             valueInputOption="RAW",
             body=body
         ).execute()
+
+        # Sort the spreadsheet based on the delivery date column
+        self.sort_spreadsheet()
 
         print(f"{result.get('updatedCells')} cells updated.")
 
@@ -93,13 +119,14 @@ class GoogleSheetsUpdater:
             print(f"Order with order_id {order_id} already exists in the spreadsheet. Skipped.")
 
 
+updater = GoogleSheetsUpdater(spreadsheet_id, range_name)
+
 # Check if order with specified order_id had been already added to spreadsheet.                                    DONE
 # Check the latest order_id in spreadsheet and add every other which has not been added.                           DONE
 # Add fetching data from DB about _pa_topper, _pa_swieczka-nr-1 and _pa_swieczka-nr-2
 # and putting it into spreadsheet                                                                                  DONE
-# Add logic that position orders with chronological delivery_date                                           IN PROGRESS
+# Add logic that position orders with chronological delivery_date                                                  DONE
 # Add test cases for making script unreliable                                                               IN PROGRESS
 # Change the way of passing credentials to database in script (hash it, or make it found by os.path?)       IN PROGRESS
 
 
-updater = GoogleSheetsUpdater(spreadsheet_id, range_name)

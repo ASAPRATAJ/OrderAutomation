@@ -34,7 +34,6 @@ def main():
         ]
 
         updater.skip_or_add_data(new_data)
-
     data_fetcher.close_connection()
 
 

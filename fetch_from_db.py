@@ -4,6 +4,8 @@ import mysql.connector
 
 class MySQLDataFetcher:
     def __init__(self, username, password, host, database):
+        """Init arguments passed to the class - connecting to db data."""
+
         self.conn = mysql.connector.connect(
             user=username,
             password=password,
@@ -13,12 +15,16 @@ class MySQLDataFetcher:
         self.cur = self.conn.cursor()
 
     def get_latest_order_id(self):
+        """SQL query for fetching latest order_id from db."""
+
         order_id_query = "SELECT post_id FROM wp_postmeta ORDER BY post_id DESC LIMIT 1"
         self.cur.execute(order_id_query)
         order_id_result = self.cur.fetchone()
         return order_id_result[0] if order_id_result else None
 
     def get_product_names_and_quantities(self, order_id):
+        """SQL query for fetching product name and its quantity from db."""
+
         product_name_query = "SELECT DISTINCT woi.order_item_name, wim.meta_value AS quantity " \
                              "FROM wp_woocommerce_order_items woi " \
                              "JOIN wp_postmeta pm ON woi.order_id = pm.post_id " \
@@ -31,6 +37,8 @@ class MySQLDataFetcher:
         return order_details
 
     def get_delivery_date(self, order_id):
+        """SQL query for fetching delivery date from db."""
+
         delivery_date_query = "SELECT wim_delivery_date.meta_value AS delivery_date " \
                               "FROM blueluna_polishlody_test.wp_woocommerce_order_itemmeta wim_delivery_date " \
                               "WHERE wim_delivery_date.order_item_id = ( " \
@@ -48,6 +56,8 @@ class MySQLDataFetcher:
             return None
 
     def get_shipping_address(self, order_id):
+        """SQL query for fetching shipping address if exists in db"""
+
         shipping_address_query = "SELECT woi.order_item_id, " \
                                  "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN woi.order_item_name " \
                                  "ELSE NULL " \
@@ -95,6 +105,8 @@ class MySQLDataFetcher:
             return None
 
     def get_comments_to_order(self, order_id):
+        """SQL query for fetching comments included in order (for example specified delivery time)."""
+
         comments_to_order_query = "SELECT post_excerpt " \
                                   "FROM blueluna_polishlody_test.wp_posts " \
                                   "WHERE ID = %s "
@@ -106,6 +118,8 @@ class MySQLDataFetcher:
             return None
 
     def get_first_and_last_name(self, order_id):
+        """SQL query for fetching full name of client."""
+
         first_and_last_name_query = "SELECT " \
                                     "MAX(CASE WHEN meta_key = '_billing_first_name' THEN meta_value END) AS billing_first_name, " \
                                     "MAX(CASE WHEN meta_key = '_billing_last_name' THEN meta_value END) AS billing_last_name " \
@@ -117,6 +131,8 @@ class MySQLDataFetcher:
         return name_data
 
     def get_product_price(self, order_id):
+        """SQL query for fetching only product price"""
+
         product_price_query = "SELECT post_id AS order_id, " \
                               "MAX(CASE WHEN meta_key = '_order_total' THEN meta_value END) - MAX(CASE WHEN meta_key = '_order_shipping' THEN meta_value END) AS cake_price " \
                               "FROM blueluna_polishlody_test.wp_postmeta " \
@@ -129,6 +145,8 @@ class MySQLDataFetcher:
         return cake_price
 
     def get_shipping_price(self, order_id):
+        """SQL query for fetching shipping price, only if order is shipped"""
+
         shipping_price_query = "SELECT post_id AS order_id, meta_value AS order_shipping " \
                                "FROM blueluna_polishlody_test.wp_postmeta " \
                                "WHERE post_id = %s AND meta_key = '_order_shipping'"
@@ -140,6 +158,8 @@ class MySQLDataFetcher:
             return None
 
     def get_payment_method(self, order_id):
+        """SQL query for fetching payment method."""
+
         payment_method_query = "SELECT post_id AS order_id, " \
                                "MAX(CASE WHEN meta_key = '_payment_method_title' THEN meta_value END) AS payment_method_title " \
                                "FROM blueluna_polishlody_test.wp_postmeta " \
@@ -148,6 +168,8 @@ class MySQLDataFetcher:
         return self.cur.fetchall()[0][1]
 
     def get_order_attributes(self, order_id):
+        """SQL query for fetching order attributes (f.e. topper, candles)."""
+
         order_attributes_query = "SELECT " \
                                  "woi.order_id, " \
                                  "woi.order_item_id, " \
@@ -161,24 +183,27 @@ class MySQLDataFetcher:
         self.cur.execute(order_attributes_query, (order_id,))
         result = self.cur.fetchall()
         order_attributes = " ".join(
-            f'{topper}, \n{swieczka_nr_1}, \n{swieczka_nr_2}' for order_id, order_item_id, topper, swieczka_nr_1, swieczka_nr_2 in result)
+            f'{topper}, \n{swieczka_nr_1}, \n{swieczka_nr_2}' for
+            order_id, order_item_id, topper, swieczka_nr_1, swieczka_nr_2 in result)
 
         return order_attributes
 
     def get_missing_order_ids(self, existing_order_ids):
-        # Jeżeli nie ma żadnych zamówień w arkuszu, zwróć wszystkie zamówienia z bazy danych
+        """Method for checking if every order in db is also in spreadsheet."""
+
+        # If there is not any existing orders in spreadsheet, then return all fetched orders from db.
         if not existing_order_ids:
             latest_order_id = self.get_latest_order_id()
             if latest_order_id is not None:
-                all_order_ids = range(3338, latest_order_id + 1)  # Tutaj ustawiam zakres od którego order_id ma dodawać
+                all_order_ids = range(3338,
+                                      latest_order_id + 1)  # There you can add order_id range which should be first in
+                #                                                                                           spreadsheet.
                 return all_order_ids
             else:
                 return []
 
-        # Znajdź największe order_id w arkuszu
         max_existing_order_id = max(map(int, existing_order_ids), default=0)
 
-        # Znajdź order_id większe od największego w arkuszu
         latest_order_id = self.get_latest_order_id()
         if latest_order_id is not None:
             missing_order_ids = [order_id for order_id in range(max_existing_order_id + 1, latest_order_id + 1)]

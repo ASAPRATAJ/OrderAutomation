@@ -1,16 +1,16 @@
 # Default ignored files
 /shelf/
-/workspace.xml
+workspace.xml
 
 /.idea/
-/OrderAutomation.iml
-/misc.xml
-/modules.xml
-/vcs.xml
-/inspectionProfiles/
+OrderAutomation.iml
+misc.xml
+modules.xml
+vcs.xml
+/inspectionProfiles
 
-/__pycache__/
-/venv/
+/__pycache__
+/venv
 
-/OrderAutomation/
-/token.json
+
+token.json

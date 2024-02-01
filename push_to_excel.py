@@ -5,7 +5,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-SPREEDSHEAT_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
+SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
 RANGE_NAME = "Arkusz1!A:J"
 
 
@@ -122,7 +122,7 @@ class GoogleSheetsUpdater:
             print(f"Order with order_id {order_id} already exists in the spreadsheet. Skipped.")
 
 
-updater = GoogleSheetsUpdater(SPREEDSHEAT_ID, RANGE_NAME)
+updater = GoogleSheetsUpdater(SPREADSHEET_ID, RANGE_NAME)
 
 # Check if order with specified order_id had been already added to spreadsheet.                                    DONE
 # Check the latest order_id in spreadsheet and add every other which has not been added.                           DONE

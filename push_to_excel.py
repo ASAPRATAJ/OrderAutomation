@@ -4,6 +4,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from google.oauth2 import service_account
 
 SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
 RANGE_NAME = "Arkusz1!A:J"
@@ -18,22 +19,16 @@ class GoogleSheetsUpdater:
         self.service = build("sheets", "v4", credentials=self.creds)
 
     def get_credentials(self):
-        """Get credentials and create token if does not exist."""
-        creds = None
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", self.scopes)
+        # Path to your service account JSON key file
+        key_file_path = 'credentials.json'
 
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file("credentials.json", self.scopes)
-                creds = flow.run_local_server(port=0)
+        # Create credentials from the service account JSON key
+        credentials = service_account.Credentials.from_service_account_file(
+            key_file_path,
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
 
-            with open("token.json", "w") as token:
-                token.write(creds.to_json())
-
-        return creds
+        return credentials
 
     def get_existing_order_ids(self):
         """Fetch existing order_id from GoogleSpreadsheet."""
@@ -91,7 +86,7 @@ class GoogleSheetsUpdater:
         ).execute()
 
         # Sort the spreadsheet based on the delivery date column
-        self.sort_spreadsheet()
+        # self.sort_spreadsheet()
 
         print(f"{result.get('updatedCells')} cells updated.")
 
@@ -131,5 +126,3 @@ updater = GoogleSheetsUpdater(SPREADSHEET_ID, RANGE_NAME)
 # Add logic that position orders with chronological delivery_date                                                  DONE
 # Add test cases for making script unreliable                                                               IN PROGRESS
 # Change the way of passing credentials to database in script (hash it, or make it found by os.path?)       IN PROGRESS
-
-

@@ -1,10 +1,17 @@
 """Main script for launching fetching data from db and pushing it to google spreadsheets."""
-from fetch_from_db import data_fetcher
+from fetch_from_db import MySQLDataFetcher
 from push_to_excel import updater
 
 
 def main():
+    data_fetcher = MySQLDataFetcher(
+        username='blueluna_polishlody_raport_prod',
+        password='pV}]^?B90q83',
+        host='mn09.webd.pl',
+        database='blueluna_polishlody'
+    )
     print("Start fetching orders from database...")
+    updater.sort_spreadsheet()
     existing_order_ids = updater.get_existing_order_ids()
     missing_order_ids = data_fetcher.get_missing_order_ids(existing_order_ids)
     print(f'Missing orders in google spreadsheet: {len(missing_order_ids)}', missing_order_ids)
@@ -32,10 +39,15 @@ def main():
             first_and_last_name,
             comments_to_order,
         ]
-
+        updater.sort_spreadsheet()
         updater.skip_or_add_data(new_data)
     data_fetcher.close_connection()
+    print("Fetching completed. Closing connection.")
+
+
+def hello_pubsub(event, context):
+    main()
 
 
 if __name__ == '__main__':
-    main()
+    hello_pubsub('data', 'context')

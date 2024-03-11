@@ -212,23 +212,24 @@ class MySQLDataFetcher:
             return order_attributes
 
     def get_missing_order_ids(self, existing_order_ids):
-        """Method for checking if every order in db is also in spreadsheet."""
+        """Method for checking if every order in the database is also in the spreadsheet."""
 
-        # If there is not any existing orders in spreadsheet, then return all fetched orders from db.
+        # If there are no existing orders in the spreadsheet, return all fetched orders from the database.
         if not existing_order_ids:
             latest_order_id = self.get_latest_order_id()
             if latest_order_id is not None:
-                all_order_ids = range(5500,
-                                      latest_order_id + 1)  # There you can add order_id range which should be first in
-                #                                                                                           spreadsheet.
-                return all_order_ids
+                all_order_ids = range(6580, latest_order_id + 1)  # Adjust the initial range as needed
+                return list(all_order_ids)
             else:
                 return []
 
+        # Find the maximum existing order ID in the spreadsheet
         max_existing_order_id = max(map(int, existing_order_ids), default=0)
 
+        # Get the latest order ID from the database
         latest_order_id = self.get_latest_order_id()
         if latest_order_id is not None:
+            # Generate a list of missing order IDs between the maximum existing order ID and the latest order ID
             missing_order_ids = [order_id for order_id in range(max_existing_order_id + 1, latest_order_id + 1)]
             return missing_order_ids
         else:

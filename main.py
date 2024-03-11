@@ -11,7 +11,6 @@ def main():
         database='blueluna_polishlody'
     )
     print("Start fetching orders from database...")
-    updater.sort_spreadsheet()
     existing_order_ids = updater.get_existing_order_ids()
     missing_order_ids = data_fetcher.get_missing_order_ids(existing_order_ids)
     print(f'Missing orders in google spreadsheet: {len(missing_order_ids)}', missing_order_ids)
@@ -39,10 +38,11 @@ def main():
             first_and_last_name,
             comments_to_order,
         ]
-        updater.sort_spreadsheet()
-        updater.skip_or_add_data(new_data)
+        updater.update_data(new_data)
     data_fetcher.close_connection()
     print("Fetching completed. Closing connection.")
+    updater.sort_spreadsheet()
+    print("Spreadsheet sorted.")
 
 
 def hello_pubsub(event, context):

@@ -1,22 +1,19 @@
 """Script for updating data in google spreadsheets."""
-import os.path
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+import gspread
 from google.oauth2 import service_account
+from datetime import datetime
 
 SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
-RANGE_NAME = "Arkusz1!A:J"
+RANGE_NAME = "Arkusz1"
 
 
 class GoogleSheetsUpdater:
     def __init__(self, spreadsheet_id, range_name):
-        self.scopes = ["https://www.googleapis.com/auth/spreadsheets"]
         self.spreadsheet_id = spreadsheet_id
         self.range_name = range_name
         self.creds = self.get_credentials()
-        self.service = build("sheets", "v4", credentials=self.creds)
+        self.client = gspread.authorize(self.creds)
+        self.sheet = self.client.open_by_key(spreadsheet_id).worksheet(range_name)
 
     def get_credentials(self):
         # Path to your service account JSON key file
@@ -27,94 +24,35 @@ class GoogleSheetsUpdater:
             key_file_path,
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
-
         return credentials
 
     def get_existing_order_ids(self):
         """Fetch existing order_id from GoogleSpreadsheet."""
-        values_range = self.service.spreadsheets().values().get(
-            spreadsheetId=self.spreadsheet_id,
-            range=f"{self.range_name.split('!')[0]}!A5:A"
-        ).execute()
-
-        existing_orders = values_range.get('values') if 'values' in values_range else []
-
-        return [str(order[0]).strip() for order in existing_orders if
-                order]
+        existing_orders = self.sheet.col_values(1)[1:]  # Assuming the order IDs are in column A, starting from row 2
+        return [str(order).strip() for order in existing_orders if order]
 
     def sort_spreadsheet(self):
-        """Sort orders in GoogleSpreadsheet according to delivery_date."""
-        values_range = self.service.spreadsheets().values().get(
-            spreadsheetId=self.spreadsheet_id,
-            range=self.range_name
-        ).execute()
+        """Sort orders in GoogleSpreadsheet according to delivery_date and remove rows with empty date strings."""
+        values = self.sheet.get_all_values()[1:]  # Assuming data starts from row 2
 
-        values = values_range.get('values') if 'values' in values_range else []
+        # Remove rows with empty date strings in the second column
+        values = [row for row in values if
+                  row[1].strip()]  # Assuming date strings are in the second column and stripping whitespace
 
-        # Sort the values based on the delivery date (assuming it's in the second column and data starts in fourth row)
-        sorted_values = sorted(values[4:], key=lambda x: x[1] if x and len(x) > 1 else '', reverse=False)
+        # Sort the remaining values based on the delivery date
+        sorted_values = sorted(values, key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=False)
 
-        # Update the sorted values in the spreadsheet
-        new_range = f"{self.range_name.split('!')[0]}!A5:J{len(sorted_values) + 4}"
-        body = {"values": sorted_values}
-        self.service.spreadsheets().values().update(
-            spreadsheetId=self.spreadsheet_id,
-            range=new_range,
-            valueInputOption="RAW",
-            body=body,
-        ).execute()
+        # Update the entire sheet with the sorted values, starting from cell 'A2'
+        self.sheet.update('A2', sorted_values)
 
     def update_data(self, new_data):
         """Update orders in GoogleSpreadsheet."""
-        values_range = self.service.spreadsheets().values().get(
-            spreadsheetId=self.spreadsheet_id,
-            range=self.range_name
-        ).execute()
-
-        # Check the number of rows
-        num_rows = len(values_range.get('values')) if 'values' in values_range else 0
-
-        # Create new range, starting from new row
-        new_range = f"{self.range_name.split('!')[0]}!A{num_rows + 2}:J{num_rows + 1 + len(new_data) - 1}"
-        # Update new range with new order data
-        body = {"values": new_data}
-        result = self.service.spreadsheets().values().update(
-            spreadsheetId=self.spreadsheet_id,
-            range=new_range,
-            valueInputOption="RAW",
-            body=body
-        ).execute()
-
-        # Sort the spreadsheet based on the delivery date column
-        # self.sort_spreadsheet()
-
-        print(f"{result.get('updatedCells')} cells updated.")
-
-    def check_if_order_had_been_already_added(self, order_id):
-        """Check if fetched order is not already in spreadsheet."""
-        values_range = self.service.spreadsheets().values().get(
-            spreadsheetId=self.spreadsheet_id,
-            range=self.range_name
-        ).execute()
-
-        existing_orders = values_range.get('values') if 'values' in values_range else []
-
-        for row in existing_orders:
-            if row and str(row[0]).strip() == str(order_id).strip():
-                return True  # Order already exists in spreadsheet
-
-        return False  # Order does not exist in spreadsheet
-
-    def skip_or_add_data(self, new_data):
-        """Method connected with update data and check data"""
-        order_id = new_data[0]
-
-        if not self.check_if_order_had_been_already_added(order_id):
-            # Order does not exist, so it will be added
-            self.update_data([new_data])
-            print(f"Order with order_id {order_id} added to the spreadsheet.")
-        else:
-            print(f"Order with order_id {order_id} already exists in the spreadsheet. Skipped.")
+        # Check if the second column of new_data is not empty
+        print(new_data[1])
+        if new_data[1] is not None:
+            num_rows = len(self.sheet.get_all_values())
+            new_range = f'A{num_rows + 1}'
+            self.sheet.append_rows([new_data], value_input_option='RAW', table_range=new_range)
 
 
 updater = GoogleSheetsUpdater(SPREADSHEET_ID, RANGE_NAME)

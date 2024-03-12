@@ -98,17 +98,28 @@ class MySQLDataFetcher:
 
         self.cur.execute(shipping_address_query, (order_id,))
         result = self.cur.fetchall()
-        # print(result)
-
         if result:
             if result and result[0][3] or result[0][4] is not None:
-                shipping_data = ", ".join(f'{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
-                                          order_id, shipping_method, street_name, street_name_number, city_name, postal_code, phone_number in
-                                          result)
-                return shipping_data
-            elif result:
+                if result[0][3] is None:
+                    shipping_data = ", ".join(f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
+                                              order_id, shipping_method, street_name, street_name_number, city_name, postal_code, phone_number in
+                                              result)
+                    return shipping_data
+                else:
+                    shipping_data = ", ".join(f'{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
+                                              order_id, shipping_method, street_name, street_name_number, city_name, postal_code, phone_number
+                                              in
+                                              result)
+                    return shipping_data
+            elif result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
+                print(result[0][2])
+                print(result)
                 shipping_data = result[0][2]
-                return shipping_data
+                return ".Odbiór Bema"
+            elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
+                return ".Odbiór Olimpia"
+            elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
+                return ".Odbiór Wroclavia"
             else:
                 return None
 
@@ -212,43 +223,10 @@ class MySQLDataFetcher:
                 warstwa_4, dekoracja in result)
             return order_attributes
 
-    # def get_missing_order_ids(self, existing_order_ids):
-    #     """Method for checking if every order in the database is also in the spreadsheet."""
-    #
-    #     print("Existing order IDs:", existing_order_ids)
-    #
-    #     # If there are no existing orders in the spreadsheet, return all fetched orders from the database.
-    #     if not existing_order_ids:
-    #         latest_order_id = self.get_latest_order_id()
-    #         if latest_order_id is not None:
-    #             all_order_ids = list(range(6580, latest_order_id + 1))  # Adjust the initial range as needed
-    #             return all_order_ids
-    #         else:
-    #             return []
-    #
-    #     # Find the maximum existing order ID in the spreadsheet
-    #     min_existing_order_id = min(existing_order_ids, default=0)
-    #
-    #     print("Min existing order ID:", min_existing_order_id)
-    #
-    #     # Get the latest order ID from the database
-    #     latest_order_id = self.get_latest_order_id()
-    #     if latest_order_id is not None:
-    #         print("Latest order ID:", latest_order_id)
-    #
-    #         # Generate a list of missing order IDs between the maximum existing order ID and the latest order ID
-    #         missing_order_ids = [order_id for order_id in range(6580, latest_order_id + 1)
-    #                              if order_id not in existing_order_ids]
-    #         print("Missing order IDs:", missing_order_ids)
-    #
-    #         return missing_order_ids
-    #     else:
-    #         return []
-
     def get_missing_order_ids(self, existing_order_ids):
         """Method for checking if every order in the database is also in the spreadsheet."""
         existing_order_ids = [int(order_id) for order_id in existing_order_ids]
-        print("Existing order IDs:", existing_order_ids)
+        # print("Existing order IDs:", existing_order_ids)
 
         # If there are no existing orders in the spreadsheet, return all fetched orders from the database.
         if not existing_order_ids:
@@ -259,24 +237,21 @@ class MySQLDataFetcher:
             else:
                 return []
 
-        # Convert existing order IDs to a set for faster lookup
-        # existing_order_ids_set = set(existing_order_ids)
-
         # Get the latest order ID from the database
         latest_order_id = self.get_latest_order_id()
         if latest_order_id is not None:
-            print("Latest order ID:", latest_order_id)
+            # print("Latest order ID:", latest_order_id)
 
             # Generate a list of missing order IDs between the minimum existing order ID and the latest order ID
             missing_order_ids = [order_id for order_id in range(6580, latest_order_id + 1)
                                  if order_id not in existing_order_ids]
 
-            print("Missing order IDs:", missing_order_ids)
+            # print("Missing order IDs:", missing_order_ids)
 
             return missing_order_ids
         else:
             return []
-    #    POPRAWIC POSZUKIWANIE MISSING_ORDER_IDS -
+
     def close_connection(self):
         self.cur.close()
         self.conn.close()

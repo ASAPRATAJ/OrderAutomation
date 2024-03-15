@@ -3,7 +3,7 @@ import gspread
 from google.oauth2 import service_account
 from datetime import datetime
 
-SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
+SPREADSHEET_ID = "1LQLM0RjuHQ85YNRI85TH5bXD5N9QxTrF1kUmzrBwcVc"
 RANGE_NAME = "Arkusz1"
 
 
@@ -33,9 +33,8 @@ class GoogleSheetsUpdater:
 
     def sort_spreadsheet(self):
         """Sort orders in GoogleSpreadsheet according to delivery_date and remove rows with empty date strings."""
-        # Define the range starting from cell A2 to the last cell in column B
         range_to_sort = 'A2:J2' + str(
-            len(self.sheet.get_all_values()))  # Assuming the delivery date is in the second column and data starts from column A
+            len(self.sheet.get_all_values()))
         # Sort the sheet directly
         self.sheet.sort((2, 'asc'), range=range_to_sort)
 

@@ -3,7 +3,7 @@ import gspread
 from google.oauth2 import service_account
 from datetime import datetime
 
-SPREADSHEET_ID = "1LQLM0RjuHQ85YNRI85TH5bXD5N9QxTrF1kUmzrBwcVc"
+SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
 RANGE_NAME = "Arkusz1"
 
 
@@ -17,7 +17,7 @@ class GoogleSheetsUpdater:
 
     def get_credentials(self):
         # Path to your service account JSON key file
-        key_file_path = 'credentials_test.json'
+        key_file_path = 'credentials.json'
 
         # Create credentials from the service account JSON key
         credentials = service_account.Credentials.from_service_account_file(

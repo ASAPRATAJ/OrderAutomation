@@ -3,7 +3,7 @@ import gspread
 from google.oauth2 import service_account
 from datetime import datetime
 
-SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
+SPREADSHEET_ID = "1LQLM0RjuHQ85YNRI85TH5bXD5N9QxTrF1kUmzrBwcVc"
 RANGE_NAME = "Arkusz1"
 
 
@@ -17,7 +17,7 @@ class GoogleSheetsUpdater:
 
     def get_credentials(self):
         # Path to your service account JSON key file
-        key_file_path = 'credentials.json'
+        key_file_path = 'credentials_test.json'
 
         # Create credentials from the service account JSON key
         credentials = service_account.Credentials.from_service_account_file(
@@ -31,35 +31,6 @@ class GoogleSheetsUpdater:
         existing_orders = self.sheet.col_values(1)[1:]  # Assuming the order IDs are in column A, starting from row 2
         return [str(order).strip() for order in existing_orders if order]
 
-    # def sort_spreadsheet(self):
-    #     """Sort orders in GoogleSpreadsheet according to delivery_date and remove rows with empty date strings."""
-    #     values = self.sheet.get_all_values()[1:]  # Assuming data starts from row 2
-    #
-    #     # Remove rows with empty date strings in the second column
-    #     values = [row for row in values if
-    #               row[1].strip()]  # Assuming date strings are in the second column and stripping whitespace
-    #
-    #     # Sort the remaining values based on the delivery date
-    #     sorted_values = sorted(values, key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=False)
-    #
-    #     # Update the entire sheet with the sorted values, starting from cell 'A2'
-    #     self.sheet.update('A2', sorted_values)
-
-    # def sort_spreadsheet(self):
-    #     """Sort orders in GoogleSpreadsheet according to delivery_date and remove rows with empty date strings."""
-    #     values = self.sheet.get_all_values()[1:]  # Assuming data starts from row 2
-    #
-    #     # Filter out rows with empty date strings in the second column
-    #     values = [row for row in values if
-    #               row[1] != '']  # Assuming date strings are in the second column and stripping whitespace
-    #
-    #     # Sort the remaining values based on the delivery date
-    #     sorted_values = sorted(values, key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=False)
-    #
-    #     # Update the entire sheet with the unique sorted values, starting from cell 'A2'
-    #     self.sheet.update('A2', sorted_values)
-    #     to jest dobre prawie
-
     def sort_spreadsheet(self):
         """Sort orders in GoogleSpreadsheet according to delivery_date and remove rows with empty date strings."""
         # Define the range starting from cell A2 to the last cell in column B
@@ -70,8 +41,7 @@ class GoogleSheetsUpdater:
 
     def update_data(self, new_data):
         """Update orders in GoogleSpreadsheet."""
-        # Check if the second column of new_data is not empty
-        print(new_data[1])
+        # Check if the true stands that the second column of new_data is not empty
         if new_data[1] is not None:
             num_rows = len(self.sheet.get_all_values())
             new_range = f'A{num_rows + 1}'

@@ -58,70 +58,106 @@ class MySQLDataFetcher:
     def get_shipping_address(self, order_id):
         """SQL query for fetching shipping address if exists in db"""
 
-        shipping_address_query = "SELECT woi.order_item_id, " \
-                                 "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN woi.order_item_name " \
-                                 "ELSE NULL " \
-                                 "END AS order_item_name, " \
-                                 "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN ( " \
-                                 "SELECT meta_value " \
-                                 "FROM blueluna_polishlody.wp_postmeta " \
-                                 "WHERE post_id = woi.order_id AND meta_key = '_billing_address_1') " \
-                                 "ELSE woi.order_item_name " \
-                                 "END AS billing_address_1, " \
-                                 "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN ( " \
-                                 "SELECT meta_value " \
-                                 "FROM blueluna_polishlody.wp_postmeta " \
-                                 "WHERE post_id = woi.order_id AND meta_key = '_billing_address_2') " \
-                                 "ELSE NULL " \
-                                 "END AS billing_address_2, " \
-                                 "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN ( " \
-                                 "SELECT meta_value " \
-                                 "FROM blueluna_polishlody.wp_postmeta " \
-                                 "WHERE post_id = woi.order_id AND meta_key = '_billing_city') " \
-                                 "ELSE NULL " \
-                                 "END AS billing_city, " \
-                                 "CASE WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN( " \
-                                 "SELECT meta_value " \
-                                 "FROM blueluna_polishlody.wp_postmeta " \
-                                 "WHERE post_id = woi.order_id AND meta_key = '_billing_post_code') " \
-                                 "ELSE NULL " \
-                                 "END AS billing_post_code, " \
-                                 "CASE " \
-                                 "WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN( " \
-                                 "SELECT meta_value " \
-                                 "FROM blueluna_polishlody.wp_postmeta " \
-                                 "WHERE post_id = woi.order_id AND meta_key = '_billing_phone') " \
-                                 "ELSE NULL " \
-                                 "END AS billing_phone " \
-                                 "FROM blueluna_polishlody.wp_woocommerce_order_items woi " \
-                                 "WHERE woi.order_item_type = 'shipping' AND woi.order_id = %s"
+        shipping_address_query = """
+            SELECT 
+                woi.order_item_id,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN woi.order_item_name 
+                    ELSE NULL 
+                END AS order_item_name,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = '_shipping_address_1'
+                    )
+                    ELSE woi.order_item_name 
+                END AS billing_address_1,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = '_shipping_address_2'
+                    )
+                    ELSE NULL 
+                END AS billing_address_2,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = '_shipping_city'
+                    )
+                    ELSE NULL 
+                END AS billing_city,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = '_shipping_company'
+                    )
+                    ELSE NULL 
+                END AS shipping_company,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = '_billing_phone'
+                    )
+                    ELSE NULL 
+                END AS billing_phone
+            FROM 
+                blueluna_polishlody.wp_woocommerce_order_items woi 
+            WHERE 
+                woi.order_item_type = 'shipping' AND woi.order_id = %s
+        """
 
         self.cur.execute(shipping_address_query, (order_id,))
         result = self.cur.fetchall()
         if result:
-            if result and result[0][3] or result[0][4] is not None:
-                if result[0][3] is None:
-                    shipping_data = ", ".join(f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
-                                              order_id, shipping_method, street_name, street_name_number, city_name, postal_code, phone_number in
-                                              result)
-                    return shipping_data
-                else:
-                    shipping_data = ", ".join(f'{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
-                                              order_id, shipping_method, street_name, street_name_number, city_name, postal_code, phone_number
-                                              in
-                                              result)
-                    return shipping_data
-            elif result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
-                print(result[0][2])
-                print(result)
-                shipping_data = result[0][2]
-                return ".Odbiór Bema"
+            print(result)
+            if result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
+                print("Jest Bema")
+                return "Odbiór Bema"
             elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
-                return ".Odbiór Olimpia"
+                print("Jest Olimpia")
+                return "Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
-                return ".Odbiór Wroclavia"
+                print("Jest Wroclavia")
+                return "Odbiór Wroclavia"
             else:
-                return None
+                # Now check if the true stands that the second element is not None
+                if result[0][1] is not None:
+                    # Now check if the true stands that the sixth element is not None
+                    if result[0][5] is not None:
+                        shipping_data = ", ".join(
+                            f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
+                            for
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            in
+                            result)
+                        print("Jest firma")
+                        return shipping_data
+                    # Now check if the true stands that the fourth element is None
+                    elif result[0][3] is None:
+                        shipping_data = ", ".join(
+                            f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            in
+                            result)
+                        print("nie ma numeru")
+                        return shipping_data
+                    # Now check if the true stands that the fourth element is not None
+                    elif result[0][3] is not None:
+                        shipping_data = ", ".join(
+                            f'{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}'
+                            for
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            in
+                            result)
+                        print("jest numer")
+                        return shipping_data
+                else:
+                    print("Chyba none", result)
 
     def get_comments_to_order(self, order_id):
         """SQL query for fetching comments included in order (for example specified delivery time)."""

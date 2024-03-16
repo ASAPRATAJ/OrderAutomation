@@ -142,20 +142,20 @@ class MySQLDataFetcher:
             print(result)
             if result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
                 print("Jest Bema")
-                return " Odbiór Bema"
+                return "Odbiór Bema"
             elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
                 print("Jest Olimpia")
-                return " Odbiór Olimpia"
+                return "Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
                 print("Jest Wroclavia")
-                return " Odbiór Wroclavia"
+                return "Odbiór Wroclavia"
             else:
                 # Now check if the true stands that the second element is not None
                 if result[0][1] is not None:
                     # Now check if the true stands that the sixth element is not None
                     if result[0][5] is not None:
                         shipping_data = ", ".join(
-                            f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
+                            f'        Dostawa\n{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
                             for
                             order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
                             in
@@ -165,7 +165,7 @@ class MySQLDataFetcher:
                     # Now check if the true stands that the fourth element is None
                     elif result[0][3] is None:
                         shipping_data = ", ".join(
-                            f'{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
+                            f'        Dostawa\n{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
                             order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
                             in
                             result)
@@ -174,7 +174,7 @@ class MySQLDataFetcher:
                     # Now check if the true stands that the fourth element is not None
                     elif result[0][3] is not None:
                         shipping_data = ", ".join(
-                            f'{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}'
+                            f'        Dostawa\n{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}'
                             for
                             order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
                             in

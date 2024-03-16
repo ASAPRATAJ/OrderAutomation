@@ -3,7 +3,7 @@ import gspread
 from google.oauth2 import service_account
 from itertools import groupby
 
-SPREADSHEET_ID = "1LQLM0RjuHQ85YNRI85TH5bXD5N9QxTrF1kUmzrBwcVc"
+SPREADSHEET_ID = "1vJoqb1CHhk7RybF5Ikw6aKd8vlK6fEbDm538vjzPcCY"
 RANGE_NAME = "Arkusz1"
 
 

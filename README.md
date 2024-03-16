@@ -26,7 +26,7 @@ Make sure to update the following configurations:
 
 ## Usage
 
-To run the script, execute `Main.py`. This script fetches data from the MySQL database and updates the Google Spreadsheet with the latest information.
+To run the script, execute `main.py`. This script fetches data from the MySQL database and updates the Google Spreadsheet with the latest information.
 
 ## Functionality
 

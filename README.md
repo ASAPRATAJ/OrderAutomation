@@ -41,5 +41,3 @@ To run the script, execute `main.py`. This script fetches data from the MySQL da
 - **Test Cases**: Implement test cases to ensure script reliability and robustness.
 - **Credential Handling**: Improve the way of passing credentials to the database in the script, such as hashing or using environment variables.
 
-Feel free to enhance this README further as your project evolves or if you have specific instructions or usage details to add.
-

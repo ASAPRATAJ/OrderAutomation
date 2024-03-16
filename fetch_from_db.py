@@ -142,13 +142,13 @@ class MySQLDataFetcher:
             print(result)
             if result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
                 print("Jest Bema")
-                return "Odbiór Bema"
+                return " Odbiór Bema"
             elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
                 print("Jest Olimpia")
-                return "Odbiór Olimpia"
+                return " Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
                 print("Jest Wroclavia")
-                return "Odbiór Wroclavia"
+                return " Odbiór Wroclavia"
             else:
                 # Now check if the true stands that the second element is not None
                 if result[0][1] is not None:

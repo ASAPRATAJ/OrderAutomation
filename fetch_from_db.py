@@ -314,7 +314,6 @@ class MySQLDataFetcher:
     def get_missing_order_ids(self, existing_order_ids):
         """Method for checking if every order in the database is also in the spreadsheet."""
         existing_order_ids = [int(order_id) for order_id in existing_order_ids]
-        # print("Existing order IDs:", existing_order_ids)
 
         # If there are no existing orders in the spreadsheet, return all fetched orders from the database.
         if not existing_order_ids:
@@ -328,17 +327,27 @@ class MySQLDataFetcher:
         # Get the latest order ID from the database
         latest_order_id = self.get_latest_order_id()
         if latest_order_id is not None:
-            # print("Latest order ID:", latest_order_id)
-
-            # Generate a list of missing order IDs between the minimum existing order ID and the latest order ID
-            missing_order_ids = [order_id for order_id in range(6580, latest_order_id + 1)
-                                 if order_id not in existing_order_ids]
-
-            # print("Missing order IDs:", missing_order_ids)
+            # Fetch missing order IDs where _new_order_email_sent is true
+            missing_order_ids = []
+            for order_id in range(6580, latest_order_id + 1):
+                # Check if the order ID is not in the existing order IDs list and has _new_order_email_sent set to true
+                if order_id not in existing_order_ids and self.is_new_order_email_sent_true(order_id):
+                    missing_order_ids.append(order_id)
 
             return missing_order_ids
         else:
             return []
+
+    def is_new_order_email_sent_true(self, order_id):
+        """Check if _new_order_email_sent is true for the given order ID."""
+        email_sent_query = """
+            SELECT COUNT(*) 
+            FROM wp_postmeta 
+            WHERE post_id = %s AND meta_key = '_new_order_email_sent' AND meta_value = 'true'
+        """
+        self.cur.execute(email_sent_query, (order_id,))
+        result = self.cur.fetchone()
+        return result[0] > 0
 
     def close_connection(self):
         self.cur.close()

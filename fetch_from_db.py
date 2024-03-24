@@ -33,20 +33,36 @@ class MySQLDataFetcher:
     def get_product_names_and_quantities(self, order_id):
         """SQL query for fetching product name and its quantity from db."""
 
+        # Query to fetch product names and quantities for line items
         product_name_query = """
-            SELECT DISTINCT 
-                woi.order_item_name, 
-                wim.meta_value AS quantity 
-            FROM 
-                wp_woocommerce_order_items woi 
-                JOIN wp_postmeta pm ON woi.order_id = pm.post_id 
-                JOIN wp_woocommerce_order_itemmeta wim ON woi.order_item_id = wim.order_item_id 
-            WHERE 
-                woi.order_item_type = 'line_item' AND pm.post_id = %s AND wim.meta_key = '_qty'
-        """
+                SELECT 
+                    woi.order_item_name, 
+                    wim.meta_value AS quantity 
+                FROM 
+                    wp_woocommerce_order_items woi 
+                JOIN 
+                    wp_woocommerce_order_itemmeta wim ON woi.order_item_id = wim.order_item_id 
+                WHERE 
+                    woi.order_id = %s 
+                    AND woi.order_item_type = 'line_item' 
+                    AND wim.meta_key = '_qty'
+            """
+
         self.cur.execute(product_name_query, (order_id,))
         result = self.cur.fetchall()
-        order_details = ', \n'.join(f'{product_name} ({quantity} szt.)' for product_name, quantity in result)
+
+        # Dictionary to store product names and their quantities
+        product_quantities = {}
+
+        for product_name, quantity in result:
+            if product_name not in product_quantities:
+                product_quantities[product_name] = int(quantity)
+            else:
+                product_quantities[product_name] += int(quantity)
+
+        # Prepare order details string with aggregated product names and quantities
+        order_details = ', \n'.join(
+            f'{product_name} ({quantity} szt.)' for product_name, quantity in product_quantities.items())
 
         return order_details
 
@@ -129,7 +145,15 @@ class MySQLDataFetcher:
                         WHERE post_id = woi.order_id AND meta_key = '_billing_phone'
                     )
                     ELSE NULL 
-                END AS billing_phone
+                END AS billing_phone,
+                CASE 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                        SELECT meta_value 
+                        FROM blueluna_polishlody.wp_postmeta 
+                        WHERE post_id = woi.order_id AND meta_key = 'Czas dostawy'
+                    )
+                    ELSE NULL
+                END AS delivery_hour
             FROM 
                 blueluna_polishlody.wp_woocommerce_order_items woi 
             WHERE 
@@ -139,15 +163,11 @@ class MySQLDataFetcher:
         self.cur.execute(shipping_address_query, (order_id,))
         result = self.cur.fetchall()
         if result:
-            print(result)
             if result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
-                print("Jest Bema")
                 return "Odbiór Bema"
             elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
-                print("Jest Olimpia")
                 return "Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
-                print("Jest Wroclavia")
                 return "Odbiór Wroclavia"
             else:
                 # Now check if the true stands that the second element is not None
@@ -155,31 +175,35 @@ class MySQLDataFetcher:
                     # Now check if the true stands that the sixth element is not None
                     if result[0][5] is not None:
                         shipping_data = ", ".join(
-                            f'        Dostawa\n{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
+                            f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
+                            f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
                             for
-                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name,
+                            phone_number, delivery_hour
                             in
                             result)
-                        print("Jest firma")
                         return shipping_data
                     # Now check if the true stands that the fourth element is None
                     elif result[0][3] is None:
                         shipping_data = ", ".join(
-                            f'        Dostawa\n{street_name}, {city_name}, \ntelefon kontaktowy: {phone_number}' for
-                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
+                            f'\ntelefon kontaktowy: {phone_number}' for
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name,
+                            phone_number, delivery_hour
                             in
                             result)
-                        print("nie ma numeru")
                         return shipping_data
                     # Now check if the true stands that the fourth element is not None
                     elif result[0][3] is not None:
                         shipping_data = ", ".join(
-                            f'        Dostawa\n{street_name} {street_name_number}, {city_name}, \ntelefon kontaktowy: {phone_number}'
+                            f'Adres dostawy:\n{street_name} {street_name_number}, {city_name}, '
+                            f'\nGodziny dostawy: {delivery_hour}'
+                            f'\ntelefon kontaktowy: {phone_number}'
                             for
-                            order_id, shipping_method, street_name, street_name_number, city_name, company_name, phone_number
+                            order_id, shipping_method, street_name, street_name_number, city_name, company_name,
+                            phone_number, delivery_hour
                             in
                             result)
-                        print("jest numer")
                         return shipping_data
                 else:
                     print("Chyba none", result)
@@ -216,7 +240,10 @@ class MySQLDataFetcher:
         """
         self.cur.execute(first_and_last_name_query, (order_id,))
         result = self.cur.fetchall()
+
         name_data = " ".join(f'{first_name} {last_name}' for first_name, last_name in result)
+        # if result[first name] + result[last_name] is equal to PIXEL.lower() == pixelxl then
+        #   return 'Pixel XL'
         return name_data
 
     def get_product_price(self, order_id):
@@ -235,9 +262,14 @@ class MySQLDataFetcher:
         """
         self.cur.execute(product_price_query, (order_id,))
         result = self.cur.fetchall()
-
-        cake_price = " ".join(f'{product_name} zł' for order_id, product_name in result)
-        return cake_price
+        if result:
+            order_total = result[0][1]
+            termobox_price = self.get_termobox_price(order_id)
+            only_product_price = order_total - termobox_price
+            cake_price = f'{only_product_price} zł'
+            return cake_price
+        else:
+            print('Nie ma order_total')
 
     def get_shipping_price(self, order_id):
         """SQL query for fetching shipping price, only if order is shipped"""
@@ -254,7 +286,13 @@ class MySQLDataFetcher:
         self.cur.execute(shipping_price_query, (order_id,))
         result = self.cur.fetchall()
         if result:
-            return result[0][1]
+            termobox_price = self.get_termobox_price(order_id)
+            if termobox_price > 0:
+                shipping_price = f'Dostawa: {result[0][1]}\nTermobox: {termobox_price}'
+                return shipping_price
+            else:
+                shipping_price = f'Dostawa: {result[0][1]}'
+                return shipping_price
         else:
             return None
 
@@ -278,7 +316,6 @@ class MySQLDataFetcher:
 
         order_attributes_query = """
             SELECT 
-                woi.order_id, 
                 woi.order_item_id, 
                 MAX(CASE WHEN wim.meta_key = 'pa_topper' THEN wim.meta_value END) AS pa_topper, 
                 MAX(CASE WHEN wim.meta_key = 'pa_swieczka-nr-1' THEN wim.meta_value END) AS pa_swieczka_nr_1, 
@@ -293,23 +330,50 @@ class MySQLDataFetcher:
                 JOIN blueluna_polishlody.wp_woocommerce_order_itemmeta wim ON woi.order_item_id = wim.order_item_id 
             WHERE 
                 woi.order_id = %s 
+                AND woi.order_item_type = 'line_item'
                 AND wim.meta_key IN ('pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2', 'warstwa-1', 'warstwa-2', 'warstwa-3', 'warstwa-4', 'dekoracja')
+            GROUP BY 
+                woi.order_item_id
         """
 
         self.cur.execute(order_attributes_query, (order_id,))
         result = self.cur.fetchall()
-        if result[0][5] is not None:
-            order_diy = " ".join(
-                f'Warstwa 1: {warstwa_1}, \nWarstwa 2: {warstwa_2}, \nWarstwa 3: {warstwa_3}, \nWarstwa 4: {warstwa_4}, \nDekoracja: {dekoracja}' for
-                order_id, order_item_id, topper, swieczka_nr_1, swieczka_nr_2, warstwa_1, warstwa_2, warstwa_3,
-                warstwa_4, dekoracja in result)
-            return order_diy
-        elif result:
-            order_attributes = " ".join(
-                f'Topper: {topper}, \nŚwieczka nr 1: {swieczka_nr_1}, \nŚwieczka nr 2: {swieczka_nr_2}' for
-                order_id, order_item_id, topper, swieczka_nr_1, swieczka_nr_2, warstwa_1, warstwa_2, warstwa_3,
-                warstwa_4, dekoracja in result)
-            return order_attributes
+
+        # List to store order attributes for each line item
+        order_attributes_list = []
+
+        for row in result:
+            order_item_id = row[0]
+            topper = row[1]
+            swieczka_nr_1 = row[2]
+            swieczka_nr_2 = row[3]
+            warstwa_1 = row[4]
+            warstwa_2 = row[5]
+            warstwa_3 = row[6]
+            warstwa_4 = row[7]
+            dekoracja = row[8]
+
+            # Prepare order attributes string for the current line item
+            order_attributes = ""
+            if topper:
+                order_attributes += f"Topper: {topper}\n"
+            if swieczka_nr_1:
+                order_attributes += f"Świeczka nr 1: {swieczka_nr_1}\n"
+            if swieczka_nr_2:
+                order_attributes += f"Świeczka nr 2: {swieczka_nr_2}\n"
+
+            # Check if there are any layers or decoration for DIY cake
+            if warstwa_1 or warstwa_2 or warstwa_3 or warstwa_4 or dekoracja:
+                if order_attributes:
+                    order_attributes += ", "
+                order_attributes += f"Warstwa 1: {warstwa_1}, \nWarstwa 2: {warstwa_2}, " \
+                                    f"\nWarstwa 3: {warstwa_3}, \nWarstwa 4: {warstwa_4}, \nDekoracja: {dekoracja}"
+
+            order_attributes_list.append(order_attributes)
+
+        # Combine order attributes for all line items into a single string
+        order_details = '\n'.join(order_attributes_list)
+        return order_details
 
     def get_missing_order_ids(self, existing_order_ids):
         """Method for checking if every order in the database is also in the spreadsheet."""
@@ -319,7 +383,7 @@ class MySQLDataFetcher:
         if not existing_order_ids:
             latest_order_id = self.get_latest_order_id()
             if latest_order_id is not None:
-                all_order_ids = list(range(6580, latest_order_id + 1))  # Adjust the initial range as needed
+                all_order_ids = list(range(6900, latest_order_id + 1))  # Adjust the initial range as needed
                 return all_order_ids
             else:
                 return []
@@ -329,7 +393,7 @@ class MySQLDataFetcher:
         if latest_order_id is not None:
             # Fetch missing order IDs where _new_order_email_sent is true
             missing_order_ids = []
-            for order_id in range(6580, latest_order_id + 1):
+            for order_id in range(6900, latest_order_id + 1):
                 # Check if the order ID is not in the existing order IDs list and has _new_order_email_sent set to true
                 if order_id not in existing_order_ids and self.is_new_order_email_sent_true(order_id):
                     missing_order_ids.append(order_id)
@@ -347,7 +411,27 @@ class MySQLDataFetcher:
         """
         self.cur.execute(email_sent_query, (order_id,))
         result = self.cur.fetchone()
-        return result[0] > 0
+        if result[0] > 0:
+            return True
+        else:
+            return False
+
+    def get_termobox_price(self, order_id):
+        """Check if 'Styropianowe opakowanie' is 'TAK' for the given order ID."""
+        termobox_price_query = """
+            SELECT COUNT(*) 
+            FROM wp_postmeta 
+            
+            WHERE post_id = %s AND meta_key = 'Styropianowe opakowanie' AND meta_value = 'TAK'
+        """
+        self.cur.execute(termobox_price_query, (order_id, ))
+        result = self.cur.fetchone()
+        if result[0] == 0:
+            box_price = 0
+            return box_price
+        else:
+            box_price = 20
+            return box_price
 
     def close_connection(self):
         self.cur.close()

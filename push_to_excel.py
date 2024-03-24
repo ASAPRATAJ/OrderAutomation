@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 from itertools import groupby
 
 SPREADSHEET_ID = "1LQLM0RjuHQ85YNRI85TH5bXD5N9QxTrF1kUmzrBwcVc"
-RANGE_NAME = "Arkusz8"
+RANGE_NAME = "Arkusz9"
 
 
 class GoogleSheetsUpdater:

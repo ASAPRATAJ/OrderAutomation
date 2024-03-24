@@ -38,7 +38,10 @@ def main():
             first_and_last_name,
             comments_to_order,
         ]
+        print(new_data)
         updater.update_data(new_data)
+    # data_fetcher.get_product_names_and_quantities(6982)
+    # data_fetcher.get_order_attributes(6982)
     data_fetcher.close_connection()
     print("Fetching completed. Closing connection.")
     updater.sort_spreadsheet()

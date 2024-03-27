@@ -206,7 +206,8 @@ class MySQLDataFetcher:
                             result)
                         return shipping_data
                 else:
-                    print("Chyba none", result)
+                    pixelXL = "PixelXL"
+                    return pixelXL
 
     def get_comments_to_order(self, order_id):
         """SQL query for fetching comments included in order (for example specified delivery time)."""

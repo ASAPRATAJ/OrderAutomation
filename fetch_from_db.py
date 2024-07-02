@@ -103,11 +103,11 @@ class MySQLDataFetcher:
             SELECT 
                 woi.order_item_id,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN woi.order_item_name 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN woi.order_item_name 
                     ELSE NULL 
                 END AS order_item_name,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_address_1'
@@ -115,7 +115,7 @@ class MySQLDataFetcher:
                     ELSE woi.order_item_name 
                 END AS billing_address_1,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_address_2'
@@ -123,7 +123,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_address_2,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_city'
@@ -131,7 +131,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_city,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_company'
@@ -139,7 +139,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS shipping_company,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_billing_phone'
@@ -147,7 +147,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_phone,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = 'Czas dostawy'
@@ -206,8 +206,7 @@ class MySQLDataFetcher:
                             result)
                         return shipping_data
                 else:
-                    pixelXL = "PixelXL"
-                    return pixelXL
+                    print("Chyba none", result)
 
     def get_comments_to_order(self, order_id):
         """SQL query for fetching comments included in order (for example specified delivery time)."""
@@ -266,6 +265,8 @@ class MySQLDataFetcher:
         if result:
             order_total = result[0][1]
             termobox_price = self.get_termobox_price(order_id)
+            if termobox_price is None:
+                termobox_price = 0
             only_product_price = order_total - termobox_price
             cake_price = f'{only_product_price} zł'
             return cake_price
@@ -289,7 +290,7 @@ class MySQLDataFetcher:
         if result:
             termobox_price = self.get_termobox_price(order_id)
             if termobox_price > 0:
-                shipping_price = f'Dostawa: {result[0][1]}\nTermobox: {termobox_price}'
+                shipping_price = f'Dostawa: {result[0][1]}\nStyropian: {termobox_price}'
                 return shipping_price
             else:
                 shipping_price = f'Dostawa: {result[0][1]}'
@@ -321,10 +322,10 @@ class MySQLDataFetcher:
                 MAX(CASE WHEN wim.meta_key = 'pa_topper' THEN wim.meta_value END) AS pa_topper, 
                 MAX(CASE WHEN wim.meta_key = 'pa_swieczka-nr-1' THEN wim.meta_value END) AS pa_swieczka_nr_1, 
                 MAX(CASE WHEN wim.meta_key = 'pa_swieczka-nr-2' THEN wim.meta_value END) AS pa_swieczka_nr_2, 
-                MAX(CASE WHEN wim.meta_key = 'warstwa-1' THEN wim.meta_value END) AS warstwa_1, 
-                MAX(CASE WHEN wim.meta_key = 'warstwa-2' THEN wim.meta_value END) AS warstwa_2, 
-                MAX(CASE WHEN wim.meta_key = 'warstwa-3' THEN wim.meta_value END) AS warstwa_3, 
-                MAX(CASE WHEN wim.meta_key = 'warstwa-4' THEN wim.meta_value END) AS warstwa_4, 
+                MAX(CASE WHEN wim.meta_key = 'warstwa-1-najnizsza-warstwa' THEN wim.meta_value END) AS warstwa_1, 
+                MAX(CASE WHEN wim.meta_key = 'warstwa-2-srodkowa' THEN wim.meta_value END) AS warstwa_2, 
+                MAX(CASE WHEN wim.meta_key = 'warstwa-3-srodkowa' THEN wim.meta_value END) AS warstwa_3, 
+                MAX(CASE WHEN wim.meta_key = 'warstwa-4-zewnetrzna-warstwa' THEN wim.meta_value END) AS warstwa_4, 
                 MAX(CASE WHEN wim.meta_key = 'dekoracja' THEN wim.meta_value END) AS dekoracja 
             FROM 
                 blueluna_polishlody.wp_woocommerce_order_items woi 
@@ -332,7 +333,7 @@ class MySQLDataFetcher:
             WHERE 
                 woi.order_id = %s 
                 AND woi.order_item_type = 'line_item'
-                AND wim.meta_key IN ('pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2', 'warstwa-1', 'warstwa-2', 'warstwa-3', 'warstwa-4', 'dekoracja')
+                AND wim.meta_key IN ('pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2', 'warstwa-1-najnizsza-warstwa', 'warstwa-2-srodkowa', 'warstwa-3-srodkowa', 'warstwa-4-zewnetrzna-warstwa', 'dekoracja')
             GROUP BY 
                 woi.order_item_id
         """
@@ -384,7 +385,7 @@ class MySQLDataFetcher:
         if not existing_order_ids:
             latest_order_id = self.get_latest_order_id()
             if latest_order_id is not None:
-                all_order_ids = list(range(6900, latest_order_id + 1))  # Adjust the initial range as needed
+                all_order_ids = list(range(8060, latest_order_id + 1))  # Adjust the initial range as needed
                 return all_order_ids
             else:
                 return []
@@ -394,7 +395,7 @@ class MySQLDataFetcher:
         if latest_order_id is not None:
             # Fetch missing order IDs where _new_order_email_sent is true
             missing_order_ids = []
-            for order_id in range(6900, latest_order_id + 1):
+            for order_id in range(8060, latest_order_id + 1):
                 # Check if the order ID is not in the existing order IDs list and has _new_order_email_sent set to true
                 if order_id not in existing_order_ids and self.is_new_order_email_sent_true(order_id):
                     missing_order_ids.append(order_id)
@@ -418,21 +419,23 @@ class MySQLDataFetcher:
             return False
 
     def get_termobox_price(self, order_id):
-        """Check if 'Styropianowe opakowanie' is 'TAK' for the given order ID."""
         termobox_price_query = """
-            SELECT COUNT(*) 
-            FROM wp_postmeta 
-            
-            WHERE post_id = %s AND meta_key = 'Styropianowe opakowanie' AND meta_value = 'TAK'
+        SELECT oim.meta_value AS _fee_amount
+        FROM wp_woocommerce_order_items oi
+        JOIN wp_woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
+        WHERE oi.order_id = %s
+        AND oi.order_item_type = 'fee'
+        AND oim.meta_key = '_fee_amount'
         """
-        self.cur.execute(termobox_price_query, (order_id, ))
-        result = self.cur.fetchone()
-        if result[0] == 0:
-            box_price = 0
-            return box_price
+        ## SPRAWDZIC CZY _FEE_AMOUNT CZY _LINE_TOTAL poniewaz nie wiem czy dostawa zalicza się do _line_total
+        self.cur.execute(termobox_price_query, (order_id,))
+        result = self.cur.fetchall()
+        if len(result) > 0:
+            termobox_price = result[0][0]
+            print(termobox_price)
+            return int(termobox_price)
         else:
-            box_price = 20
-            return box_price
+            return 0
 
     def close_connection(self):
         self.cur.close()

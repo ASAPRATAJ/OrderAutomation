@@ -169,6 +169,10 @@ class MySQLDataFetcher:
                 return "Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
                 return "Odbiór Wroclavia"
+            elif result[0][2] == "Odbiór osobisty - Hubska (Bezpłatnie)":
+                return "Odbiór Hubska"
+            elif result[0][2] == "Odbiór osobisty - Oławska (Bezpłatnie)":
+                return "Odbiór Hubska"
             else:
                 # Now check if the true stands that the second element is not None
                 if result[0][1] is not None:
@@ -378,31 +382,29 @@ class MySQLDataFetcher:
         return order_details
 
     def get_missing_order_ids(self, existing_order_ids):
-        """Method for checking if every order in the database is also in the spreadsheet."""
-        existing_order_ids = [int(order_id) for order_id in existing_order_ids]
-
-        # If there are no existing orders in the spreadsheet, return all fetched orders from the database.
-        if not existing_order_ids:
-            latest_order_id = self.get_latest_order_id()
-            if latest_order_id is not None:
-                all_order_ids = list(range(8060, latest_order_id + 1))  # Adjust the initial range as needed
-                return all_order_ids
-            else:
-                return []
-
-        # Get the latest order ID from the database
+        """Check if every order in the database is also in the spreadsheet."""
+        # Pobierz najnowsze order_id z bazy danych
         latest_order_id = self.get_latest_order_id()
-        if latest_order_id is not None:
-            # Fetch missing order IDs where _new_order_email_sent is true
-            missing_order_ids = []
-            for order_id in range(8060, latest_order_id + 1):
-                # Check if the order ID is not in the existing order IDs list and has _new_order_email_sent set to true
-                if order_id not in existing_order_ids and self.is_new_order_email_sent_true(order_id):
-                    missing_order_ids.append(order_id)
+        if latest_order_id is None:
+            return []  # Brak danych w bazie
 
-            return missing_order_ids
-        else:
-            return []
+        existing_order_ids = set(map(int, existing_order_ids))
+
+        # Jeśli arkusz jest pusty, zwróć wszystkie zamówienia
+        if not existing_order_ids:
+            print('W arkuszu nie ma zadnych zamowien')
+            return list(range(13190, latest_order_id + 1))
+
+        missing_order_ids = []
+
+        # Sprawdzaj każdy order_id i loguj wynik is_new_order_email_sent_true
+        for order_id in range(13190, latest_order_id + 1):
+            is_sent = self.is_new_order_email_sent_true(order_id)
+            print(f"Order ID: {order_id}, is_new_order_email_sent: {is_sent}")
+            if order_id not in existing_order_ids and is_sent:
+                missing_order_ids.append(order_id)
+
+        return missing_order_ids
 
     def is_new_order_email_sent_true(self, order_id):
         """Check if _new_order_email_sent is true for the given order ID."""

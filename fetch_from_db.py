@@ -162,25 +162,42 @@ class MySQLDataFetcher:
 
         self.cur.execute(shipping_address_query, (order_id,))
         result = self.cur.fetchall()
+
         if result:
             if result[0][2] == "Odbiór osobisty - Bema (Bezpłatnie)":
+                nip_number = self.get_nip_number(order_id)
+                if nip_number is not None:
+                    return f"Odbiór Bema\nNIP:{nip_number}"
                 return "Odbiór Bema"
             elif result[0][2] == "Odbiór osobisty - Olimpia Port (Bezpłatnie)":
+                nip_number = self.get_nip_number(order_id)
+                if nip_number is not None:
+                    return f"Odbiór Olimpia\nNIP:{nip_number}"
                 return "Odbiór Olimpia"
             elif result[0][2] == "Odbiór osobisty - Wroclavia (Bezpłatnie)":
+                nip_number = self.get_nip_number(order_id)
+                if nip_number is not None:
+                    return f"Odbiór Wroclavia\nNIP:{nip_number}"
                 return "Odbiór Wroclavia"
             elif result[0][2] == "Odbiór osobisty - Hubska (Bezpłatnie)":
+                nip_number = self.get_nip_number(order_id)
+                if nip_number is not None:
+                    return f"Odbiór Hubska\nNIP:{nip_number}"
                 return "Odbiór Hubska"
             elif result[0][2] == "Odbiór osobisty - Oławska (Bezpłatnie)":
-                return "Odbiór Hubska"
+                nip_number = self.get_nip_number(order_id)
+                if nip_number is not None:
+                    return f"Odbiór Oławska\nNIP:{nip_number}"
+                return "Odbiór Oławska"
             else:
                 # Now check if the true stands that the second element is not None
                 if result[0][1] is not None:
                     # Now check if the true stands that the sixth element is not None
                     if result[0][5] is not None:
+                        nip_number = self.get_nip_number(order_id)
                         shipping_data = ", ".join(
                             f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
-                            f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
+                            f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}, \nNIP:{nip_number}'
                             for
                             order_id, shipping_method, street_name, street_name_number, city_name, company_name,
                             phone_number, delivery_hour
@@ -438,6 +455,18 @@ class MySQLDataFetcher:
             return int(termobox_price)
         else:
             return 0
+
+    def get_nip_number(self, order_id):
+        nip_number_query = """
+        SELECT meta_value
+        FROM blueluna_polishlody.wp_postmeta pm
+        WHERE pm.post_id = %s AND meta_key = 'NIP'
+        """
+        self.cur.execute(nip_number_query, (order_id,))
+        result = self.cur.fetchone()
+        nip_number = result[0]
+
+        return nip_number
 
     def close_connection(self):
         self.cur.close()

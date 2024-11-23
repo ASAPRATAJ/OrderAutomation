@@ -195,15 +195,26 @@ class MySQLDataFetcher:
                     # Now check if the true stands that the sixth element is not None
                     if result[0][5] is not None:
                         nip_number = self.get_nip_number(order_id)
-                        shipping_data = ", ".join(
-                            f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
-                            f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}, \nNIP:{nip_number}'
-                            for
-                            order_id, shipping_method, street_name, street_name_number, city_name, company_name,
-                            phone_number, delivery_hour
-                            in
-                            result)
-                        return shipping_data
+                        if nip_number is not None:
+                            shipping_data = ", ".join(
+                                f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
+                                f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}, \nNIP:{nip_number}'
+                                for
+                                order_id, shipping_method, street_name, street_name_number, city_name, company_name,
+                                phone_number, delivery_hour
+                                in
+                                result)
+                            return shipping_data
+                        else:
+                            shipping_data = ", ".join(
+                                f'Adres dostawy:\n{street_name}, {city_name}, \nGodziny dostawy: {delivery_hour} '
+                                f'\ntelefon kontaktowy: {phone_number}, \nfirma: {company_name}'
+                                for
+                                order_id, shipping_method, street_name, street_name_number, city_name, company_name,
+                                phone_number, delivery_hour
+                                in
+                                result)
+                            return shipping_data
                     # Now check if the true stands that the fourth element is None
                     elif result[0][3] is None:
                         shipping_data = ", ".join(
@@ -464,9 +475,10 @@ class MySQLDataFetcher:
         """
         self.cur.execute(nip_number_query, (order_id,))
         result = self.cur.fetchone()
-        nip_number = result[0]
 
-        return nip_number
+        if result is not None:
+            nip_number = result[0]
+            return nip_number
 
     def close_connection(self):
         self.cur.close()

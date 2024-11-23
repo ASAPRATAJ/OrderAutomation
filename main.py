@@ -15,7 +15,7 @@ def main():
 
     missing_order_ids = data_fetcher.get_missing_order_ids(existing_order_ids)
     print(f'Missing orders in google spreadsheet: {len(missing_order_ids)}', missing_order_ids)
-
+    missing_order_ids = [14856]
     for missing_order_id in missing_order_ids:
         product_names_and_quantities = data_fetcher.get_product_names_and_quantities(missing_order_id)
         delivery_date = data_fetcher.get_delivery_date(missing_order_id)

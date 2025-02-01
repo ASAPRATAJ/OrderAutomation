@@ -284,11 +284,13 @@ class MySQLDataFetcher:
         product_price_query = """
             SELECT 
                 post_id AS order_id, 
-                MAX(CASE WHEN meta_key = '_order_total' THEN meta_value END) - MAX(CASE WHEN meta_key = '_order_shipping' THEN meta_value END) AS cake_price 
+                MAX(CASE WHEN meta_key = '_order_total' THEN meta_value END) - 
+                MAX(CASE WHEN meta_key = '_order_shipping' THEN meta_value END) - 
+                MAX(CASE WHEN meta_key = '_order_shipping_tax' THEN meta_value END) AS cake_price
             FROM 
                 blueluna_polishlody.wp_postmeta 
             WHERE 
-                post_id = %s AND meta_key IN ('_order_total', '_order_shipping') 
+                post_id = %s AND meta_key IN ('_order_total', '_order_shipping', '_order_shipping_tax') 
             GROUP BY 
                 post_id
         """
@@ -311,17 +313,17 @@ class MySQLDataFetcher:
         shipping_price_query = """
             SELECT 
                 post_id AS order_id, 
-                meta_value AS order_shipping 
+                SUM(meta_value) AS total_shipping 
             FROM 
                 blueluna_polishlody.wp_postmeta 
             WHERE 
-                post_id = %s AND meta_key = '_order_shipping'
+                post_id = %s AND meta_key IN ('_order_shipping', '_order_shipping_tax')
         """
         self.cur.execute(shipping_price_query, (order_id,))
         result = self.cur.fetchall()
         if result:
             termobox_price = self.get_termobox_price(order_id)
-            if termobox_price > 0:
+            if termobox_price is not None and termobox_price > 0:
                 shipping_price = f'Dostawa: {result[0][1]}\nStyropian: {termobox_price}'
                 return shipping_price
             else:
@@ -421,12 +423,12 @@ class MySQLDataFetcher:
         # Jeśli arkusz jest pusty, zwróć wszystkie zamówienia
         if not existing_order_ids:
             print('W arkuszu nie ma zadnych zamowien')
-            return list(range(13190, latest_order_id + 1))
+            return list(range(16750, latest_order_id + 1))
 
         missing_order_ids = []
 
         # Sprawdzaj każdy order_id i loguj wynik is_new_order_email_sent_true
-        for order_id in range(13190, latest_order_id + 1):
+        for order_id in range(16750, latest_order_id + 1):
             is_sent = self.is_new_order_email_sent_true(order_id)
             print(f"Order ID: {order_id}, is_new_order_email_sent: {is_sent}")
             if order_id not in existing_order_ids and is_sent:
@@ -450,17 +452,19 @@ class MySQLDataFetcher:
 
     def get_termobox_price(self, order_id):
         termobox_price_query = """
-        SELECT oim.meta_value AS _fee_amount
-        FROM wp_woocommerce_order_items oi
-        JOIN wp_woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
-        WHERE oi.order_id = %s
-        AND oi.order_item_type = 'fee'
-        AND oim.meta_key = '_fee_amount'
+            SELECT 
+                SUM(oim.meta_value) AS total_fee
+            FROM wp_woocommerce_order_items oi
+            JOIN wp_woocommerce_order_itemmeta oim 
+                ON oi.order_item_id = oim.order_item_id 
+                AND oim.meta_key IN ('_fee_amount', '_line_tax')
+            WHERE oi.order_id = %s
+            AND oi.order_item_type = 'fee';
         """
         ## SPRAWDZIC CZY _FEE_AMOUNT CZY _LINE_TOTAL poniewaz nie wiem czy dostawa zalicza się do _line_total
         self.cur.execute(termobox_price_query, (order_id,))
         result = self.cur.fetchall()
-        if len(result) > 0:
+        if len(result) > 0 and result[0][0] is not None:
             termobox_price = result[0][0]
             print(termobox_price)
             return int(termobox_price)

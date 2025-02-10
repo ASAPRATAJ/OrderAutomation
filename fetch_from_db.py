@@ -360,14 +360,17 @@ class MySQLDataFetcher:
                 MAX(CASE WHEN wim.meta_key = 'warstwa-2-srodkowa' THEN wim.meta_value END) AS warstwa_2, 
                 MAX(CASE WHEN wim.meta_key = 'warstwa-3-srodkowa' THEN wim.meta_value END) AS warstwa_3, 
                 MAX(CASE WHEN wim.meta_key = 'warstwa-4-zewnetrzna-warstwa' THEN wim.meta_value END) AS warstwa_4, 
-                MAX(CASE WHEN wim.meta_key = 'dekoracja' THEN wim.meta_value END) AS dekoracja 
+                MAX(CASE WHEN wim.meta_key = 'dekoracja' THEN wim.meta_value END) AS dekoracja, 
+                MAX(CASE WHEN wim.meta_key = 'smak' THEN wim.meta_value END) AS smak,
+                woi.order_item_name AS item_name
             FROM 
                 blueluna_polishlody.wp_woocommerce_order_items woi 
                 JOIN blueluna_polishlody.wp_woocommerce_order_itemmeta wim ON woi.order_item_id = wim.order_item_id 
             WHERE 
                 woi.order_id = %s 
                 AND woi.order_item_type = 'line_item'
-                AND wim.meta_key IN ('pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2', 'warstwa-1-najnizsza-warstwa', 'warstwa-2-srodkowa', 'warstwa-3-srodkowa', 'warstwa-4-zewnetrzna-warstwa', 'dekoracja')
+                AND wim.meta_key IN ('item_name', 'pa_topper', 'pa_swieczka-nr-1', 'pa_swieczka-nr-2', 'warstwa-1-najnizsza-warstwa', 
+                'warstwa-2-srodkowa', 'warstwa-3-srodkowa', 'warstwa-4-zewnetrzna-warstwa', 'dekoracja', 'smak')
             GROUP BY 
                 woi.order_item_id
         """
@@ -375,41 +378,57 @@ class MySQLDataFetcher:
         self.cur.execute(order_attributes_query, (order_id,))
         result = self.cur.fetchall()
 
-        # List to store order attributes for each line item
-        order_attributes_list = []
+        order_details = []
+
+        IGLOO_TYPES = {"Iglo", "Tort miesiąca", "pistacLOVE", "Jagodziany", "Chmurka", "Słodziak"}
+        DIY_STRING = "DIY"
+        DZIECIAKI_STRING = "Dzieciaki"
 
         for row in result:
-            order_item_id = row[0]
-            topper = row[1]
-            swieczka_nr_1 = row[2]
-            swieczka_nr_2 = row[3]
-            warstwa_1 = row[4]
-            warstwa_2 = row[5]
-            warstwa_3 = row[6]
-            warstwa_4 = row[7]
-            dekoracja = row[8]
+            order_item_id, topper, swieczka_nr_1, swieczka_nr_2, warstwa_1, warstwa_2, warstwa_3, warstwa_4, dekoracja, smak, item_name = row
 
-            # Prepare order attributes string for the current line item
-            order_attributes = ""
-            if topper:
-                order_attributes += f"Topper: {topper}\n"
-            if swieczka_nr_1:
-                order_attributes += f"Świeczka nr 1: {swieczka_nr_1}\n"
-            if swieczka_nr_2:
-                order_attributes += f"Świeczka nr 2: {swieczka_nr_2}\n"
+            order_attributes = f"{item_name}:\n"
 
-            # Check if there are any layers or decoration for DIY cake
-            if warstwa_1 or warstwa_2 or warstwa_3 or warstwa_4 or dekoracja:
-                if order_attributes:
-                    order_attributes += ", "
-                order_attributes += f"Warstwa 1: {warstwa_1}, \nWarstwa 2: {warstwa_2}, " \
-                                    f"\nWarstwa 3: {warstwa_3}, \nWarstwa 4: {warstwa_4}, \nDekoracja: {dekoracja}"
+            if any(tort in item_name for tort in IGLOO_TYPES):
+                if topper:
+                    order_attributes += f"  Topper: {topper}\n"
+                if swieczka_nr_1:
+                    order_attributes += f"  Świeczka nr 1: {swieczka_nr_1}\n"
+                if swieczka_nr_2:
+                    order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
 
-            order_attributes_list.append(order_attributes)
+            elif DIY_STRING in item_name:
+                if topper:
+                    order_attributes += f"  Topper: {topper}\n"
+                if swieczka_nr_1:
+                    order_attributes += f"  Świeczka nr 1: {swieczka_nr_1}\n"
+                if swieczka_nr_2:
+                    order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
+                if warstwa_1:
+                    order_attributes += f"  Warstwa 1: {warstwa_1}\n"
+                if warstwa_2:
+                    order_attributes += f"  Warstwa 2: {warstwa_2}\n"
+                if warstwa_3:
+                    order_attributes += f"  Warstwa 3: {warstwa_3}\n"
+                if warstwa_4:
+                    order_attributes += f"  Warstwa 4: {warstwa_4}\n"
+                if dekoracja:
+                    order_attributes += f"  Dekoracja: {dekoracja}\n"
 
-        # Combine order attributes for all line items into a single string
-        order_details = '\n'.join(order_attributes_list)
-        return order_details
+            elif DZIECIAKI_STRING in item_name:
+                if topper:
+                    order_attributes += f"  Topper: {topper}\n"
+                if swieczka_nr_1:
+                    order_attributes += f"  Świeczka nr 1: {swieczka_nr_1}\n"
+                if swieczka_nr_2:
+                    order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
+                if smak:
+                    order_attributes += f"  Dzieciaki rządzą smak: {smak}\n"
+
+            if order_attributes.strip():
+                order_details.append(order_attributes.strip())
+
+        return "\n\n".join(order_details) if order_details else "Brak dekoracji."
 
     def get_missing_order_ids(self, existing_order_ids):
         """Check if every order in the database is also in the spreadsheet."""

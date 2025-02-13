@@ -389,15 +389,7 @@ class MySQLDataFetcher:
 
             order_attributes = f"{item_name}:\n"
 
-            if any(tort in item_name for tort in IGLOO_TYPES):
-                if topper:
-                    order_attributes += f"  Topper: {topper}\n"
-                if swieczka_nr_1:
-                    order_attributes += f"  Świeczka nr 1: {swieczka_nr_1}\n"
-                if swieczka_nr_2:
-                    order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
-
-            elif DIY_STRING in item_name:
+            if DIY_STRING in item_name:
                 if topper:
                     order_attributes += f"  Topper: {topper}\n"
                 if swieczka_nr_1:
@@ -415,6 +407,14 @@ class MySQLDataFetcher:
                 if dekoracja:
                     order_attributes += f"  Dekoracja: {dekoracja}\n"
 
+            elif any(tort in item_name for tort in IGLOO_TYPES):
+                if topper:
+                    order_attributes += f"  Topper: {topper}\n"
+                if swieczka_nr_1:
+                    order_attributes += f"  Świeczka nr 1: {swieczka_nr_1}\n"
+                if swieczka_nr_2:
+                    order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
+
             elif DZIECIAKI_STRING in item_name:
                 if topper:
                     order_attributes += f"  Topper: {topper}\n"
@@ -424,6 +424,8 @@ class MySQLDataFetcher:
                     order_attributes += f"  Świeczka nr 2: {swieczka_nr_2}\n"
                 if smak:
                     order_attributes += f"  Dzieciaki rządzą smak: {smak}\n"
+                if dekoracja:
+                    order_attributes += f"  Dekoracja: {dekoracja}\n"
 
             if order_attributes.strip():
                 order_details.append(order_attributes.strip())

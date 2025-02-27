@@ -103,11 +103,11 @@ class MySQLDataFetcher:
             SELECT 
                 woi.order_item_id,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN woi.order_item_name 
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN woi.order_item_name 
                     ELSE NULL 
                 END AS order_item_name,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_address_1'
@@ -115,7 +115,7 @@ class MySQLDataFetcher:
                     ELSE woi.order_item_name 
                 END AS billing_address_1,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_address_2'
@@ -123,7 +123,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_address_2,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_city'
@@ -131,7 +131,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_city,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_shipping_company'
@@ -139,7 +139,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS shipping_company,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = '_billing_phone'
@@ -147,7 +147,7 @@ class MySQLDataFetcher:
                     ELSE NULL 
                 END AS billing_phone,
                 CASE 
-                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia - dostarczamy torty autem z mroźnią' THEN (
+                    WHEN woi.order_item_name = 'Dostawa na terenie Wrocławia' THEN (
                         SELECT meta_value 
                         FROM blueluna_polishlody.wp_postmeta 
                         WHERE post_id = woi.order_id AND meta_key = 'Czas dostawy'

@@ -1,14 +1,23 @@
 """Main script for launching fetching data from db and pushing it to google spreadsheets."""
+import os
 from fetch_from_db import MySQLDataFetcher
 from push_to_excel import updater
 
+# Fetch credentials and connection details from environment variables
+username = os.getenv('DB_USERNAME')
+password = os.getenv('DB_PASSWORD')
+host = os.getenv('DB_HOST')
+database = os.getenv('DB_NAME')
+
 
 def main():
+
+    # Initialize the data fetcher with environment variables
     data_fetcher = MySQLDataFetcher(
-        username='blueluna_polishlody_raport_prod',
-        password='pV}]^?B90q83',
-        host='mn09.webd.pl',
-        database='blueluna_polishlody'
+        username=username,
+        password=password,
+        host=host,
+        database=database
     )
     print("Start fetching orders from database...")
     existing_order_ids = updater.get_existing_order_ids()

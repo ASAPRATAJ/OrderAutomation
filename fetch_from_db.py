@@ -1,5 +1,12 @@
 """Script for fetching data from MySQL database."""
+import os
 import mysql.connector
+
+# Fetch credentials and connection details from environment variables
+username = os.getenv('DB_USERNAME')
+password = os.getenv('DB_PASSWORD')
+host = os.getenv('DB_HOST')
+database = os.getenv('DB_NAME')
 
 
 class MySQLDataFetcher:
@@ -510,11 +517,3 @@ class MySQLDataFetcher:
         self.conn.close()
 
         ### Need to change it to os.path ###
-
-
-data_fetcher = MySQLDataFetcher(
-    username='blueluna_polishlody_raport_prod',
-    password='pV}]^?B90q83',
-    host='mn09.webd.pl',
-    database='blueluna_polishlody'
-)

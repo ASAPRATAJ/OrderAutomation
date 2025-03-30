@@ -271,7 +271,8 @@ class MySQLDataFetcher:
         first_and_last_name_query = """
             SELECT 
                 MAX(CASE WHEN meta_key = '_billing_first_name' THEN meta_value END) AS billing_first_name, 
-                MAX(CASE WHEN meta_key = '_billing_last_name' THEN meta_value END) AS billing_last_name 
+                MAX(CASE WHEN meta_key = '_billing_last_name' THEN meta_value END) AS billing_last_name,
+                MAX(CASE WHEN meta_key = '_billing_company' THEN meta_value END) AS billing_company  
             FROM 
                 blueluna_polishlody.wp_postmeta 
             WHERE 
@@ -280,7 +281,12 @@ class MySQLDataFetcher:
         self.cur.execute(first_and_last_name_query, (order_id,))
         result = self.cur.fetchall()
 
-        name_data = " ".join(f'{first_name} {last_name}' for first_name, last_name in result)
+        if result[0][2] is not None:
+            name_data = " ".join(f'{first_name} {last_name}\n{company_name}' for
+                                 first_name, last_name, company_name in result)
+        else:
+            name_data = " ".join(f'{first_name} {last_name}' for
+                                 first_name, last_name, company_name in result)
         # if result[first name] + result[last_name] is equal to PIXEL.lower() == pixelxl then
         #   return 'Pixel XL'
         return name_data

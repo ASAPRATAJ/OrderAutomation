@@ -14,3 +14,7 @@ vcs.xml
 
 
 token.json
+
+.gitignore
+credentials.json
+credentials_test.json
